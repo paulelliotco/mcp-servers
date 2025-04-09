@@ -33,27 +33,62 @@ This MCP server provides tools to interact with the AssemblyAI API for audio tra
 
 ## Running the Server
 
-This server is designed to be run by an MCP host application (like Roo). The host application should be configured to execute the compiled `build/index.js` file using Node.js. The host will manage the server process.
+This server is designed to be run by an MCP host application (like Cursor, VS Code with Cline, or Claude Desktop). The host application needs to be configured to execute the compiled `build/index.js` file using Node.js.
 
-Example `mcp_settings.json` configuration:
+There are two main ways to configure the server and provide the API key:
 
-```json
-{
-  "mcpServers": {
-    "assemblyai": {
-      "command": "node",
-      "args": [
-        "PATH_TO_REPO/mcp-servers/assemblyai-mcp/build/index.js"
-        // Ensure the path is correct for your system
-      ],
-      "disabled": false,
-      "alwaysAllow": []
-      // The server loads ASSEMBLYAI_API_KEY from the .env file in its directory
+**Method 1: Using `.env` file (Recommended for Cursor/VS Code)**
+
+This method keeps your API key in the local `.env` file (which is ignored by Git). You need to tell the MCP host to run the server process *from* the server's directory so it can find the `.env` file.
+
+1.  Ensure your `ASSEMBLYAI_API_KEY` is correctly set in the `.env` file (Step 4 in Setup).
+2.  Configure your host application's MCP settings (e.g., `mcp_settings.json` for Cursor/Cline) by adding the `assemblyai` server entry and **crucially, setting the `cwd` (current working directory)** to the server's root folder:
+
+    ```json
+    {
+      "mcpServers": {
+        "assemblyai": {
+          "command": "node",
+          "args": [
+            "PATH_TO_REPO/mcp-servers/assemblyai-mcp/build/index.js"
+          ],
+          "cwd": "PATH_TO_REPO/mcp-servers/assemblyai-mcp",
+          "disabled": false,
+          "alwaysAllow": []
+        }
+      }
     }
-    // ... other servers
-  }
-}
-```
+    ```
+    Replace `PATH_TO_REPO` with the absolute path to where you cloned the `mcp-servers` repository (e.g., `d:\\Cascade Projects\\Assignment` on Windows).
+
+**Method 2: Using Host Configuration `env` (Recommended for Claude Desktop)**
+
+Some hosts, like the Claude Desktop app, might not reliably respect the `cwd` setting for loading `.env` files. In this case, it's more robust to provide the API key directly via the host's configuration.
+
+1.  Configure your host application's MCP settings (e.g., `claude_desktop_config.json`) by adding the `assemblyai` server entry, including the `env` block:
+
+    ```json
+    {
+      "mcpServers": {
+        "assemblyai": {
+          "command": "node",
+          "args": [
+            "PATH_TO_REPO/mcp-servers/assemblyai-mcp/build/index.js"
+          ],
+          "cwd": "PATH_TO_REPO/mcp-servers/assemblyai-mcp",
+          "env": {
+            "ASSEMBLYAI_API_KEY": "<YOUR_ASSEMBLYAI_API_KEY_HERE>"
+          },
+          "disabled": false,
+          "alwaysAllow": []
+        }
+      }
+    }
+    ```
+    Replace `PATH_TO_REPO` and `<YOUR_ASSEMBLYAI_API_KEY_HERE>`.
+2.  See the `claude_config_example.json` file in this directory for a template.
+
+**Important:** After modifying the host application's configuration file, you usually need to **restart the host application** (e.g., close and reopen Cursor or Claude Desktop) for the changes to take effect.
 
 ## Available Tools
 
