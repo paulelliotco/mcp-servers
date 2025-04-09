@@ -12,6 +12,7 @@ import { AssemblyAI } from 'assemblyai'; // Import AssemblyAI SDK
 import dotenv from 'dotenv';
 
 // Load environment variables from .env file if present
+// Load environment variables from .env file in the current working directory
 dotenv.config();
 
 // --- AssemblyAI Client Setup ---
@@ -101,16 +102,20 @@ class AssemblyAiServer {
         this.server.onerror = (error) => console.error('[MCP Error]', error);
 
         // Graceful shutdown
-        process.on('SIGINT', async () => {
-            console.error('Received SIGINT, shutting down AssemblyAI MCP server...');
+        process.on('SIGINT', this.handleShutdown.bind(this, 'SIGINT'));
+        process.on('SIGTERM', this.handleShutdown.bind(this, 'SIGTERM'));
+    }
+
+    private async handleShutdown(signal: string) {
+        console.error(`Received ${signal}, shutting down AssemblyAI MCP server...`);
+        try {
             await this.server.close();
+            console.error('Server closed gracefully.');
+        } catch (error) {
+            console.error('Error during server shutdown:', error);
+        } finally {
             process.exit(0);
-        });
-        process.on('SIGTERM', async () => {
-            console.error('Received SIGTERM, shutting down AssemblyAI MCP server...');
-            await this.server.close();
-            process.exit(0);
-        });
+        }
     }
 
     private setupToolHandlers() {
@@ -215,6 +220,31 @@ class AssemblyAiServer {
     }
 }
 
+// --- Global Error Handlers ---
+process.on('uncaughtException', (error) => {
+    console.error('UNCAUGHT EXCEPTION:', error);
+    process.exit(1); // Exit process on unhandled exception
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('UNHANDLED REJECTION:', reason);
+    // Optionally exit or log more details
+    // process.exit(1);
+});
+
+
 // --- Start the Server ---
-const server = new AssemblyAiServer();
-server.run();
+async function main() {
+    try {
+        console.error('Initializing AssemblyAiServer...');
+        const serverInstance = new AssemblyAiServer();
+        console.error('AssemblyAiServer initialized. Starting run...');
+        await serverInstance.run();
+        console.error('AssemblyAiServer run completed (should not happen for stdio server unless closed).');
+    } catch (error) {
+        console.error('Error during server instantiation or run:', error);
+        process.exit(1);
+    }
+}
+
+main();

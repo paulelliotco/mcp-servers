@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "assemblyai": {
+      "command": "node",
+      "args": [
+        "PATH_TO_REPO/mcp-servers/assemblyai-mcp/build/index.js"
+      ],
+      "cwd": "PATH_TO_REPO/mcp-servers/assemblyai-mcp",
+      "env": {
+        "ASSEMBLYAI_API_KEY": "<YOUR_ASSEMBLYAI_API_KEY_HERE>"
+      },
+      "disabled": false,
+      "alwaysAllow": []
+    }
+  }
+}
